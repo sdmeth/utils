@@ -60,20 +60,25 @@ function Download-Software {
 
     Write-Host "Downloading $SoftwareName"
 
-    $ReleaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/askaer-solutions/$SoftwareName/releases/latest" -UseBasicParsing
-    $DownloadUrl = $ReleaseData.assets | Where-Object { $_.name -match "windows" } | Select-Object -ExpandProperty browser_download_url
+    try {
+        $ReleaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/askaer-solutions/$SoftwareName/releases/latest" -UseBasicParsing
+        $DownloadUrl = $ReleaseData.assets | Where-Object { $_.name -match "windows" } | Select-Object -ExpandProperty browser_download_url
 
-    if (-not $DownloadUrl) {
-        Write-Host "Failed to get latest release of $SoftwareName"
-        exit 1
+        if (-not $DownloadUrl) {
+            Write-Host "Failed to get latest release of $SoftwareName"
+            exit 1
+        }
+
+        $SoftwareFile = "$SoftwareName" + "_windows.exe"
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile $SoftwareFile
+
+        Write-Host "Installation has been successfully completed"
+        Write-Host "Starting $SoftwareName"
+        Start-Process -FilePath ".\$SoftwareFile" -NoNewWindow
     }
-
-    $SoftwareFile = "$SoftwareName" + "_windows.exe"
-    Invoke-WebRequest -Uri $DownloadUrl -OutFile $SoftwareFile
-
-    Write-Host "Installation has been successfully completed"
-    Write-Host "Starting $SoftwareName"
-    Start-Process -FilePath ".\$SoftwareFile" -NoNewWindow
+    catch {
+        Write-Host "Failed to get latest release of $SoftwareName"
+    }
 }
 
 function Start-Installation {
