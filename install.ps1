@@ -1,3 +1,7 @@
+param (
+    [string]$SoftwareName
+)
+
 function Check-Params {
     param (
         [string]$SoftwareName
@@ -11,7 +15,7 @@ function Check-Params {
 
 function Check-OS {
     if ($IsWindows -eq $false) {
-        Write-Host "This script only supports Windows."
+        Write-Host "This script only supports Windows"
         exit 1
     }
 }
@@ -40,7 +44,7 @@ function Check-Git {
 }
 
 function Install-Git {
-    Write-Host "Installing Git..."
+    Write-Host "Installing Git"
 
     $GitInstaller = "https://github.com/git-for-windows/git/releases/latest/download/Git-64-bit.exe"
     $InstallerPath = "$env:TEMP\Git-Installer.exe"
@@ -64,7 +68,7 @@ function Download-Software {
         exit 1
     }
 
-    $SoftwareFile = "$SoftwareName.exe"
+    $SoftwareFile = "$SoftwareName" + "_windows.exe"
     Invoke-WebRequest -Uri $DownloadUrl -OutFile $SoftwareFile
 
     Write-Host "Installation has been successfully completed"
@@ -88,4 +92,4 @@ function Start-Installation {
     Download-Software -SoftwareName $SoftwareName
 }
 
-Start-Installation -SoftwareName $args[0]
+Start-Installation -SoftwareName $SoftwareName
