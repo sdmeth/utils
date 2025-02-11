@@ -45,12 +45,12 @@ function Check-Git {
 
 function Install-Git {
     Write-Host "Installing Git"
-
-    $GitInstaller = "https://github.com/git-for-windows/git/releases/latest/download/Git-64-bit.exe"
-    $InstallerPath = "$env:TEMP\Git-Installer.exe"
-
-    Invoke-WebRequest -Uri $GitInstaller -OutFile $InstallerPath
-    Start-Process -FilePath $InstallerPath -ArgumentList "/SILENT" -NoNewWindow -Wait
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget install --id Git.Git -e -h 2> $null
+    }
+    else {
+        choco install git -y
+    }
 }
 
 function Download-Software {
@@ -60,25 +60,26 @@ function Download-Software {
 
     Write-Host "Downloading $SoftwareName"
 
-    try {
-        $ReleaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/askaer-solutions/$SoftwareName/releases/latest" -UseBasicParsing
-        $DownloadUrl = $ReleaseData.assets | Where-Object { $_.name -match "windows" } | Select-Object -ExpandProperty browser_download_url
+    $ReleaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/askaer-solutions/$SoftwareName/releases/latest" -UseBasicParsing -ErrorAction SilentlyContinue
 
-        if (-not $DownloadUrl) {
-            Write-Host "Failed to get latest release of $SoftwareName"
-            exit 1
-        }
-
-        $SoftwareFile = "$SoftwareName" + "_windows.exe"
-        Invoke-WebRequest -Uri $DownloadUrl -OutFile $SoftwareFile
-
-        Write-Host "Installation has been successfully completed"
-        Write-Host "Starting $SoftwareName"
-        Start-Process -FilePath ".\$SoftwareFile" -NoNewWindow
-    }
-    catch {
+    if ($ReleaseData -eq $null) {
         Write-Host "Failed to get latest release of $SoftwareName"
+        exit 1
     }
+
+    $DownloadUrl = $ReleaseData.assets | Where-Object { $_.name -match "windows" } | Select-Object -ExpandProperty browser_download_url
+
+    if (-not $DownloadUrl) {
+        Write-Host "Failed to get the download URL for $SoftwareName"
+        exit 1
+    }
+
+    $SoftwareFile = "$SoftwareName" + "_windows.exe"
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile $SoftwareFile
+
+    Write-Host "Installation has been successfully completed"
+    Write-Host "Starting $SoftwareName"
+    Start-Process -FilePath ".\$SoftwareFile" -NoNewWindow
 }
 
 function Start-Installation {
